@@ -1,0 +1,10 @@
+{
+  "project": {
+    "name": "ESP32 Template",
+    "version": "1.0.0"
+  },
+  "settings": {
+    "debug": true,
+    "updateInterval": 5000
+  }
+}
