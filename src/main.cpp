@@ -82,9 +82,13 @@ void resetEffectState() {
     writeLampOutput(ledOn, true);
 }
 
-void setLamp(bool on) {
+void setLamp(bool on, bool persist = true) {
+    const bool changed = ledOn != on;
     ledOn = on;
     resetEffectState();
+    if (persist && changed) {
+        prefs.putBool("led_on", ledOn);
+    }
 }
 
 void blinkBootSignal() {
@@ -393,6 +397,7 @@ void loadSettingsFromPrefs() {
         settings.mqttPort = DEFAULT_MQTT_PORT;
     }
 
+    ledOn = prefs.getBool("led_on", false);
     currentMode = prefs.getString("mode", DEFAULT_MODE);
     if (!isValidMode(currentMode)) {
         currentMode = DEFAULT_MODE;
@@ -706,7 +711,7 @@ void setup() {
     pinMode(ledPin, OUTPUT);
     digitalWrite(ledPin, LED_OFF_LEVEL);
     blinkBootSignal();
-    setLamp(false);
+    setLamp(ledOn, false);
 
     setupAccessPoint();
     setupCaptivePortal();
