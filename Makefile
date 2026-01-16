@@ -61,7 +61,7 @@ help:
 	@echo "  make list               List connected ESP32 devices"
 	@echo ""
 	@echo "Release:"
-	@echo "  make release VERSION=v1.0.0   Create tagged release"
+	@echo "  make release v=1.0.0          Create tagged release"
 	@echo ""
 	@echo "Board Selection:"
 	@echo "  BOARD=esp32   (default)  ESP32 Generic"
@@ -153,51 +153,35 @@ list:
 
 .PHONY: release
 release:
-	@if [ -z "$(VERSION)" ]; then echo "❌ VERSION required (e.g. make release VERSION=v1.0.0)"; exit 1; fi
-	@echo "🚀 Starting automated release $(VERSION)..."
-	@echo ""
-	@echo "📝 Step 1/6: Updating version files..."
-	@echo "$(VERSION)" > VERSION
-	@cd web && npm version --no-git-tag-version --allow-same-version ${VERSION#v} --silent
-	@echo "✅ Version files updated"
-	@echo ""
-	@echo "🌐 Step 2/6: Building web interface with new version..."
+	@if [ -z "$(v)" ] && [ -z "$(VERSION)" ]; then echo "❌ VERSION required (use make release v=1.2.3 or VERSION=v1.2.3)"; exit 1; fi
+	$(eval VERSION_INPUT := $(if $(v),$(v),$(VERSION)))
+	$(eval VERSION_CLEAN := $(shell echo "$(VERSION_INPUT)" | sed 's/^v//'))
+	@echo "🚀 Starting release v$(VERSION_CLEAN)..."
+	@echo "// v$(VERSION_CLEAN)" > VERSION
+	@$(PYTHON) scripts/inject_version.py
 	@$(MAKE) web-headers
-	@echo "✅ Web interface built and embedded"
-	@echo ""
-	@echo "🔨 Step 3/6: Building firmware..."
-	@$(MAKE) build BOARD=$(BOARD)
-	@echo "✅ Firmware built"
-	@echo ""
-	@echo "📦 Step 4/6: Committing release..."
-	@git add VERSION web/package.json web/package-lock.json || true
-	@git add -f lib/WebService/web_files.h || true
-	@git commit -m "Release $(VERSION)" || (echo "⚠️  No changes to commit"; true)
-	@echo "✅ Release committed"
-	@echo ""
-	@echo "🏷️  Step 5/6: Creating and pushing tag..."
-	@if git rev-parse $(VERSION) >/dev/null 2>&1; then \
-		echo "⚠️  Tag $(VERSION) already exists, deleting old tag..."; \
-		git tag -d $(VERSION); \
-		git push origin :refs/tags/$(VERSION) 2>/dev/null || true; \
+	@$(PLATFORMIO) run --environment $(BOARD)
+	@echo "📝 Preparing release commit..."
+	@echo "Release v$(VERSION_CLEAN)" > /tmp/release_msg.txt
+	@echo "" >> /tmp/release_msg.txt
+	@last_tag=$$(git describe --tags --abbrev=0 2>/dev/null || echo ""); \
+	if [ -n "$$last_tag" ]; then \
+		commit_count=$$(git rev-list $$last_tag..HEAD --count); \
+		if [ $$commit_count -eq 0 ]; then \
+			echo "No changes since last release ($$last_tag)" >> /tmp/release_msg.txt; \
+		else \
+			echo "Changes since $$last_tag:" >> /tmp/release_msg.txt; \
+			git log $$last_tag..HEAD --format="- %s" -20 >> /tmp/release_msg.txt; \
+		fi; \
+	else \
+		echo "Recent changes:" >> /tmp/release_msg.txt; \
+		git log -5 --format="- %s" >> /tmp/release_msg.txt; \
 	fi
-	@git tag -a $(VERSION) -m "Release $(VERSION)"
-	@echo "✅ Tag $(VERSION) created"
-	@echo ""
-	@echo "🚀 Step 6/6: Pushing to remote..."
-	@BRANCH=$$(git rev-parse --abbrev-ref HEAD); \
-	echo "📤 Pushing branch: $$BRANCH"; \
-	git push origin $$BRANCH; \
-	echo "📤 Pushing tag: $(VERSION)"; \
-	git push origin $(VERSION); \
-	REPO=$$(git config --get remote.origin.url | sed 's/.*github.com[:\/]\(.*\)\.git/\1/' || echo "unknown"); \
-	echo ""; \
-	echo "✅ ✅ ✅ Release $(VERSION) completed! ✅ ✅ ✅"; \
-	echo ""; \
-	if [ "$$REPO" != "unknown" ]; then \
-		echo "🔗 GitHub: https://github.com/$$REPO"; \
-		echo "🔗 Releases: https://github.com/$$REPO/releases"; \
-	fi; \
-	echo ""; \
-	echo "📦 Version: $(VERSION)"; \
-	echo "🎯 Board: $(BOARD)"
+	@git add VERSION include/version.h lib/WebService/web_files.h
+	@git commit -F /tmp/release_msg.txt
+	@rm /tmp/release_msg.txt
+	@git tag v$(VERSION_CLEAN)
+	@echo "📤 Pushing to origin..."
+	@git push origin HEAD
+	@git push origin v$(VERSION_CLEAN)
+	@echo "✅ Release v$(VERSION_CLEAN) published"

@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio pillow
+
+      - name: Build web assets
+        run: |
+          cd web
+          npm install
+          npm run build
+          cd ..
+          python3 tools/web-to-header.py web/dist -o lib/WebService
+
+      - name: Build firmware
+        run: |
+          pio run -e esp32
+          pio run -e esp32c3
+          pio run -e esp32s3
+          pio run -e esp32c6
+
+      - name: Package binaries
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          mkdir -p binaries/esp32 binaries/esp32c3 binaries/esp32s3 binaries/esp32c6
+          for env in esp32 esp32c3 esp32s3 esp32c6; do
+            if [ -f .pio/build/${env}/firmware.bin ]; then
+              cp .pio/build/${env}/firmware.bin binaries/${env}/meowmeow-${env}-${VERSION}.bin
+            fi
+            if [ -f .pio/build/${env}/firmware.elf ]; then
+              cp .pio/build/${env}/firmware.elf binaries/${env}/meowmeow-${env}-${VERSION}.elf
+            fi
+          done
+          ls -lh binaries/* || true
+
+      - name: Publish release assets
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            binaries/**

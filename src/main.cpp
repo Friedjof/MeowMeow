@@ -6,6 +6,7 @@
 #include <ctype.h>
 
 #include "web_files.h"
+#include "version.h"
 
 #ifndef LED_BUILTIN
 #define LED_BUILTIN 4
@@ -696,6 +697,7 @@ void setup() {
     Serial.begin(115200);
     Serial.println();
     Serial.println("Meow. I wake up and claim my territory.");
+    Serial.printf("Meow. Firmware %s.\n", VERSION_STR);
     randomSeed(static_cast<unsigned long>(micros()));
 
     prefs.begin("meowlamp", false);

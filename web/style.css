@@ -328,6 +328,35 @@ body::before {
     gap: 12px;
 }
 
+.footer-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.96rem;
+}
+
+.footer-name {
+    color: var(--ink);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.sep {
+    color: var(--muted);
+}
+
+#uiVersionFooter {
+    color: var(--ink);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+#uiVersionFooter:hover,
+.footer-name:hover {
+    text-decoration: underline;
+}
+
 .footer-actions {
     display: flex;
     justify-content: center;

@@ -125,6 +125,7 @@ const api = MOCK_MODE ? mockApi : liveApi;
 document.addEventListener('DOMContentLoaded', () => {
     bindUI();
     setupCatEyes();
+    applyVersion();
     setModePill();
     updateModeUI();
     refreshStatus();
@@ -194,6 +195,16 @@ function setModePill() {
     } else {
         modePill.textContent = 'Mode: live';
     }
+}
+
+function applyVersion() {
+    const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : 'dev';
+    const versionElement = document.getElementById('uiVersionFooter');
+    if (!versionElement) {
+        return;
+    }
+    versionElement.textContent = version;
+    versionElement.href = `https://github.com/Friedjof/MeowMeow/releases/tag/${version}`;
 }
 
 async function refreshStatus() {
