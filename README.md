@@ -32,24 +32,6 @@ the serial port. ⚡
 - 🧶 Vite UI embedded as C headers in firmware.
 - 🧺 Optional filesystem via `data-template/` and Makefile targets.
 
-## Project layout 🗂️
-
-```
-.
-├── boards/                 # Partition schemes
-├── data-template/          # Filesystem seed (optional)
-├── docs/
-│   └── assets/             # README images and diagrams
-├── include/                # Header files
-├── lib/                    # Custom libs + generated web headers
-├── src/                    # ESP32 firmware source
-├── test/                   # Unit tests
-├── tools/                  # Build and setup tools
-├── web/                    # Vite web UI source
-├── Makefile                # Build helpers
-└── platformio.ini          # PlatformIO configuration
-```
-
 ## Quickstart 🐾
 
 1) Setup:
@@ -89,6 +71,19 @@ pio device monitor
 I start an open WiFi (SSID: `MeowMeow`). Connect and open
 `http://192.168.4.1`. Android usually shows the portal automatically; if not,
 open it manually. Then tap a paw to toggle the lamp. 🐾
+
+## Hardware setup (my wiring nap) 🔧
+
+I run a 3V LED filament from the ESP32-C3 3.3V rail and switch it with a 2N2222
+transistor:
+
+- LED filament needs 3V; ESP32-C3 provides 3.3V.
+- 2N2222 wiring:
+  - E (emitter) -> GND
+  - B (base) -> GPIO4 / D2
+  - C (collector) -> 47 ohm resistor -> LED filament negative
+- LED filament positive -> 3.3V
+- Common ground shared between ESP32 and filament
 
 ## API pawprint 🐾
 
