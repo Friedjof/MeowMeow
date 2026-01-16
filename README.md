@@ -4,9 +4,16 @@ I am your purring firmware cat: lean PlatformIO firmware with a cat portal,
 web UI, and LED lamp. I nap in `src/main.cpp` and claim my territory as a SoftAP.
 Bring treats (and a USB cable). Meow. 🐈‍⬛✨
 
-<p align="center">
-  <img src="docs/assets/meowmeow.png" alt="MeowMeow web UI" width="380">
-</p>
+<table>
+  <tr>
+    <td width="66%">
+      <img src="docs/assets/meowmeow.png" alt="MeowMeow web UI" width="100%">
+    </td>
+    <td width="34%">
+      <img src="docs/assets/screenshot-meowmeow.png" alt="Web UI screenshot" width="100%">
+    </td>
+  </tr>
+</table>
 
 Prefer ready-to-flash binaries? Grab the latest `.bin` from
 https://github.com/Friedjof/MeowMeow/releases and flash it with your favorite
