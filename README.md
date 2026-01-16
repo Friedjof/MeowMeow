@@ -1,37 +1,43 @@
-# MeowMeow ESP32 PlatformIO Template 😺🐾
+# MeowMeow - Cat Lamp Firmware 😺🐾
 
-Ich bin dein schnurrender Firmware-Kater: ein schlankes PlatformIO-Template mit
-Cat-Portal, Web-UI und LED-Lampe. Ich schnurre in `src/main.cpp` und bringe mein
-Revier als SoftAP ins Wohnzimmer. 🐈‍⬛✨
+I am your purring firmware cat: lean PlatformIO firmware with a cat portal,
+web UI, and LED lamp. I nap in `src/main.cpp` and claim my territory as a SoftAP.
+Bring treats (and a USB cable). Meow. 🐈‍⬛✨
 
 <p align="center">
-  <img src="docs/assets/meowmeow.png" alt="MeowMeow web UI" width="420">
+  <img src="docs/assets/meowmeow.png" alt="MeowMeow web UI" width="380">
 </p>
+
+Prefer ready-to-flash binaries? Grab the latest `.bin` from
+https://github.com/Friedjof/MeowMeow/releases and flash it with your favorite
+tool. 🐾
+You can also flash directly in Chrome via https://esptool.spacehuhn.com/ using
+the serial port. ⚡
 
 ## Info ℹ️
 
-> 🐾 **Wer ich bin:** Ein ESP32-Template, das als offenes WLAN startet und eine
->    kleine Web-UI fuer die Lampen-LED bereitstellt.
-> 🧶 **Warum ich da bin:** Schnell loslegen, ohne Ballast, mit einem UI, das in
->    die Firmware eingebettet wird.
-> 🥣 **Was ich brauche:** PlatformIO Core, ein ESP32-Board, USB-Kabel; Node.js
->    nur, wenn du am Web-UI schraubst.
+> 🐾 **Who I am:** ESP32 firmware that boots an open WiFi and serves a small
+>    web UI to control the lamp LED.
+> 🧶 **Why I exist:** Start fast, stay lean, ship a UI that is embedded in
+>    firmware.
+> 🥣 **What I need:** PlatformIO Core, an ESP32 board, USB cable; Node.js only
+>    if you tweak the web UI; Python 3 for header generation scripts.
 
-## Was ich kann (aus Katzensicht) 😼
+## What I can do (cat view) 😼
 
-- 🌐 SoftAP + DNS-Captive-Portal, damit du automatisch bei mir landest.
-- 💡 Lampen-LED an/aus plus Effekte: static, blink, purr, bzzz.
-- 🧩 JSON-API fuer Status, Einstellungen und Modus.
-- 🧪 Multi-Target Builds: esp32, esp32c3, esp32s3, esp32c6.
-- 🧶 Web-UI mit Vite, als C-Header in die Firmware eingebettet.
-- 🧺 Optionales Filesystem via `data-template/` und Makefile-Targets.
+- 🌐 SoftAP + DNS captive portal so you land on my page.
+- 💡 Lamp LED on/off plus effects: static, blink, purr, bzzz.
+- 🧩 JSON API for status, settings, and mode.
+- 🧪 Multi-target builds: esp32, esp32c3, esp32s3, esp32c6.
+- 🧶 Vite UI embedded as C headers in firmware.
+- 🧺 Optional filesystem via `data-template/` and Makefile targets.
 
-## Projektlayout 🗂️
+## Project layout 🗂️
 
 ```
 .
 ├── boards/                 # Partition schemes
-├── data-template/          # Filesystem template (optional)
+├── data-template/          # Filesystem seed (optional)
 ├── docs/
 │   └── assets/             # README images and diagrams
 ├── include/                # Header files
@@ -44,7 +50,7 @@ Revier als SoftAP ins Wohnzimmer. 🐈‍⬛✨
 └── platformio.ini          # PlatformIO configuration
 ```
 
-## Schnellstart 🐾
+## Quickstart 🐾
 
 1) Setup:
 
@@ -55,54 +61,54 @@ Revier als SoftAP ins Wohnzimmer. 🐈‍⬛✨
 2) Build:
 
 ```bash
-pio run -e esp32
+make build BOARD=esp32
 ```
 
 3) Flash:
 
 ```bash
-pio run -e esp32 -t upload
+make flash
 ```
 
 4) Monitor (optional):
 
 ```bash
-pio device monitor
-```
-
-Oder mit Makefile:
-
-```bash
-make build BOARD=esp32
-make flash
 make monitor
 ```
 
-## Mit dem Revier verbinden 🌐
+Prefer PlatformIO CLI?
 
-Ich starte ein offenes WLAN (SSID: `MeowMeow`). Verbinde dich und oeffne
-`http://192.168.4.1`. Android zeigt meist automatisch das Portal; sonst einfach
-manuell oeffnen. Dann kannst du die Lampe mit einem Pfotentipp steuern. 🐾
+```bash
+pio run -e esp32
+pio run -e esp32 -t upload
+pio device monitor
+```
 
-## API mit Pfotenabdruck 🐾
+## Connect to my territory 🌐
 
-- `GET /api/paw` liefert den Status:
+I start an open WiFi (SSID: `MeowMeow`). Connect and open
+`http://192.168.4.1`. Android usually shows the portal automatically; if not,
+open it manually. Then tap a paw to toggle the lamp. 🐾
+
+## API pawprint 🐾
+
+- `GET /api/paw` returns status:
   `{"led_on":true,"uptime_s":123,"ssid":"MeowMeow","mode":"static"}`
-- `POST /api/paw` setzt den Lampenstatus per `state` oder Body.
-  Akzeptiert: `on`, `off`, `toggle`, `true`, `false`, `1`, `0`.
-- `GET /api/settings` liefert gespeicherte Einstellungen als JSON.
-- `POST /api/settings` akzeptiert JSON mit:
+- `POST /api/paw` sets the lamp state via `state` or raw body.
+  Accepts: `on`, `off`, `toggle`, `true`, `false`, `1`, `0`.
+- `GET /api/settings` returns saved settings JSON.
+- `POST /api/settings` accepts JSON with:
   `wifi_enabled`, `wifi_ssid`, `wifi_password`, `mqtt_enabled`, `mqtt_host`,
   `mqtt_port`, `mqtt_topic`, `led_pin`.
-- `POST /api/mode` akzeptiert `{"mode":"static"}` mit:
+- `POST /api/mode` accepts `{"mode":"static"}` with:
   `static`, `blink`, `purr`, `bzzz`.
 
-Einstellungen landen im NVS (Preferences). WLAN- und MQTT-Felder werden aktuell
-nur gespeichert, nicht automatisch verbunden. 🐱‍👓
+Settings live in NVS (Preferences). WiFi and MQTT fields are stored but not
+connected by default in the current firmware. 🐱‍👓
 
-## Firmware anpassen 🛠️
+## Firmware tune-up 🛠️
 
-Die wichtigsten Defaults in `src/main.cpp`:
+Key defaults in `src/main.cpp`:
 
 ```cpp
 const int DEFAULT_LED_PIN = LED_BUILTIN;
@@ -111,15 +117,15 @@ const char* AP_SSID = "MeowMeow";
 const char* DEFAULT_MODE = "static";
 ```
 
-## Web-UI Entwicklung 🧵
+## Web UI development 🧵
 
-Die UI in `web/` wird zu C-Headern gebaut und in die Firmware eingebettet.
+The UI in `web/` is built into C headers and embedded in the firmware.
 
 ```bash
 make web-headers
 ```
 
-Oder direkt im Web-Ordner:
+Or run from the web folder:
 
 ```bash
 make -C web dev
@@ -128,24 +134,26 @@ make -C web build-esp
 
 ## Filesystem (optional) 📁
 
-- `data-template/` ist das Template.
-- `./tools/setup.sh` kopiert es beim ersten Setup nach `data/`.
-- Upload mit `make deploy-fs` oder `pio run -t uploadfs`.
+- `data-template/` holds the filesystem seed.
+- `./tools/setup.sh` copies it to `data/` on first setup.
+- Upload with `make deploy-fs` or `pio run -t uploadfs`.
 
-## Partitionen 🧱
+## Partitions 🧱
 
-`platformio.ini` nutzt `boards/min_spiffs.csv` fuer OTA und ein kleines FS.
-Passe die CSV in `boards/` an, wenn du mehr Platz brauchst. 🐾
+`platformio.ini` uses `boards/min_spiffs.csv` for OTA and a small FS.
+Edit the CSV in `boards/` if you need more space. 🐾
 
-## Kleine Katzen-Details ✨
+## Tiny cat details ✨
 
-- Ich miaue beim Booten im Serial-Log und verrate meine IP. 😺
-- Das Captive Portal faengt typische OS-Checks ab (`/generate_204`, `fwlink`).
-- `make deploy-flash` erledigt Web-UI, Firmware und Filesystem in einem Rutsch.
-- Ich mag kurze, nicht-blockierende Schleifen (lies: `loop()` bleibt flink).
+- I meow on boot over Serial at 115200 and announce my IP. 😺
+- I catch OS portal probes like `/generate_204`, `fwlink`, `hotspot-detect.html`.
+- `make deploy-flash` does web UI, firmware, and filesystem in one pounce.
+- I like short, non-blocking loops so I stay responsive. 🐈
+- My UI lives in `lib/WebService/web_files.h` after `make web-headers`.
 
-## Doku & Hinweise 📌
+## Docs and notes 📌
 
-- README-Bilder liegen in `docs/assets/` und werden relativ verlinkt.
-- Fuer AI-Agenten: [AGENTS.md](AGENTS.md).
-- Kurzer Einstieg: [QUICKSTART.md](QUICKSTART.md).
+- README images live in `docs/assets/` and are linked by relative paths.
+- Printable 3D STL files: https://www.printables.com/model/1472283-neon-cat-lamp-out-of-led-filament
+- For AI agents: [AGENTS.md](AGENTS.md).
+- Short walkthrough: [QUICKSTART.md](QUICKSTART.md).
