@@ -56,13 +56,12 @@ jobs:
           pio run -e esp32
           pio run -e esp32c3
           pio run -e esp32s3
-          pio run -e esp32c6
 
       - name: Package binaries
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
-          mkdir -p binaries/esp32 binaries/esp32c3 binaries/esp32s3 binaries/esp32c6
-          for env in esp32 esp32c3 esp32s3 esp32c6; do
+          mkdir -p binaries/esp32 binaries/esp32c3 binaries/esp32s3
+          for env in esp32 esp32c3 esp32s3; do
             if [ -f .pio/build/${env}/firmware.bin ]; then
               cp .pio/build/${env}/firmware.bin binaries/${env}/meowmeow-${env}-${VERSION}.bin
             fi

@@ -10,7 +10,7 @@ def read_version():
     except FileNotFoundError:
         return "v0.0.0-dev"
 
-    version = re.sub(r"^/+\\s*", "", content)
+    version = re.sub(r"^/+\s*", "", content)
     if not version:
         return "v0.0.0-dev"
     return version
@@ -22,7 +22,7 @@ def inject_version(version):
         raise FileNotFoundError(f"Missing version header: {header_path}")
 
     content = header_path.read_text(encoding="utf-8")
-    pattern = r'#define\\s+VERSION_STR\\s+"[^"]*"'
+    pattern = r'#define\s+VERSION_STR\s+"[^"]*"'
     replacement = f'#define VERSION_STR "{version}"'
     updated, count = re.subn(pattern, replacement, content)
     if count == 0:

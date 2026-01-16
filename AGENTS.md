@@ -41,7 +41,6 @@ This template is a lean PlatformIO project for ESP32 devices.
 pio run -e esp32
 pio run -e esp32c3
 pio run -e esp32s3
-pio run -e esp32c6
 ```
 
 ### 3. Flash firmware

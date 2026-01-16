@@ -67,7 +67,6 @@ help:
 	@echo "  BOARD=esp32   (default)  ESP32 Generic"
 	@echo "  BOARD=esp32c3            ESP32-C3"
 	@echo "  BOARD=esp32s3            ESP32-S3"
-	@echo "  BOARD=esp32c6            ESP32-C6"
 	@echo ""
 	@echo "Examples:"
 	@echo "  make build BOARD=esp32c3"

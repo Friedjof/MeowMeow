@@ -58,14 +58,12 @@ jobs:
           pio run -e esp32
           pio run -e esp32c3
           pio run -e esp32s3
-          pio run -e esp32c6
 
       - name: Firmware size
         run: |
           pio run -e esp32 -t size
           pio run -e esp32c3 -t size
           pio run -e esp32s3 -t size
-          pio run -e esp32c6 -t size
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -78,5 +76,3 @@ jobs:
             .pio/build/esp32c3/firmware.elf
             .pio/build/esp32s3/firmware.bin
             .pio/build/esp32s3/firmware.elf
-            .pio/build/esp32c6/firmware.bin
-            .pio/build/esp32c6/firmware.elf

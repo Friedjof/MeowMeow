@@ -35,7 +35,7 @@ the serial port. ⚡
 - 🌐 SoftAP + DNS captive portal so you land on my page.
 - 💡 Lamp LED on/off plus effects: static, blink, purr, bzzz.
 - 🧩 JSON API for status, settings, and mode.
-- 🧪 Multi-target builds: esp32, esp32c3, esp32s3, esp32c6.
+- 🧪 Multi-target builds: esp32, esp32c3, esp32s3.
 - 🧶 Vite UI embedded as C headers in firmware.
 - 🧺 Optional filesystem via `data-template/` and Makefile targets.
 
@@ -56,13 +56,13 @@ make build BOARD=esp32
 3) Flash:
 
 ```bash
-make flash
+make flash BOARD=esp32
 ```
 
 4) Monitor (optional):
 
 ```bash
-make monitor
+make monitor BOARD=esp32
 ```
 
 Prefer PlatformIO CLI?
@@ -72,6 +72,28 @@ pio run -e esp32
 pio run -e esp32 -t upload
 pio device monitor
 ```
+
+Developer quick start (fast paws):
+
+```bash
+make run BOARD=esp32
+```
+
+Web UI hacking loop:
+
+```bash
+make -C web dev
+make web-headers
+```
+
+Release build (git + push access needed):
+
+```bash
+make release VERSION=v1.0.0 BOARD=esp32
+```
+
+This builds the web UI and firmware, creates a release commit + tag, and pushes
+to your `origin`.
 
 ## Connect to my territory 🌐
 
