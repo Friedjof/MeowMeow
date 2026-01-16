@@ -1,0 +1,82 @@
+name: Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            .pio
+          key: ${{ runner.os }}-pio-${{ hashFiles('platformio.ini') }}
+          restore-keys: |
+            ${{ runner.os }}-pio-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio pillow
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Prepare default config
+        run: |
+          bash tools/prepare_config.sh
+
+      - name: Build web assets
+        run: |
+          cd web
+          npm install
+          npm run build
+          cd ..
+          python3 tools/web-to-header.py web/dist -o lib/WebService
+
+      - name: Build firmware
+        run: |
+          pio run -e esp32
+          pio run -e esp32c3
+          pio run -e esp32s3
+          pio run -e esp32c6
+
+      - name: Firmware size
+        run: |
+          pio run -e esp32 -t size
+          pio run -e esp32c3 -t size
+          pio run -e esp32s3 -t size
+          pio run -e esp32c6 -t size
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-all-${{ github.sha }}
+          path: |
+            .pio/build/esp32/firmware.bin
+            .pio/build/esp32/firmware.elf
+            .pio/build/esp32c3/firmware.bin
+            .pio/build/esp32c3/firmware.elf
+            .pio/build/esp32s3/firmware.bin
+            .pio/build/esp32s3/firmware.elf
+            .pio/build/esp32c6/firmware.bin
+            .pio/build/esp32c6/firmware.elf
