@@ -17,6 +17,9 @@ const uint8_t LED_OFF_LEVEL = LOW;
 const uint16_t DEFAULT_MQTT_PORT = 1883;
 const char* DEFAULT_MQTT_TOPIC = "meow/lamp";
 const char* DEFAULT_MODE = "static";
+const uint8_t BOOT_BLINK_COUNT = 2;
+const uint16_t BOOT_BLINK_ON_MS = 160;
+const uint16_t BOOT_BLINK_OFF_MS = 140;
 
 const char* AP_SSID = "MeowMeow";
 const byte DNS_PORT = 53;
@@ -41,9 +44,57 @@ struct DeviceSettings {
 
 DeviceSettings settings;
 
+struct LampEffectState {
+    unsigned long nextMs;
+    int step;
+    int flickersRemaining;
+    bool outputOn;
+};
+
+LampEffectState effect = {0, 0, 0, false};
+
+const uint32_t BLINK_ON_MS = 650;
+const uint32_t BLINK_OFF_MS = 650;
+const uint32_t PURR_PATTERN_MS[] = {160, 90, 220, 520};
+const bool PURR_PATTERN_ON[] = {true, false, true, false};
+const size_t PURR_PATTERN_LEN = sizeof(PURR_PATTERN_MS) / sizeof(PURR_PATTERN_MS[0]);
+const uint32_t BZZZ_GAP_MIN_MS = 6000;
+const uint32_t BZZZ_GAP_MAX_MS = 14000;
+const uint16_t BZZZ_FLICKER_MIN_MS = 50;
+const uint16_t BZZZ_FLICKER_MAX_MS = 120;
+const uint8_t BZZZ_FLICKER_MIN_COUNT = 3;
+const uint8_t BZZZ_FLICKER_MAX_COUNT = 4;
+
+void writeLampOutput(bool on, bool force = false) {
+    if (!force && effect.outputOn == on) {
+        return;
+    }
+    effect.outputOn = on;
+    digitalWrite(ledPin, on ? LED_ON_LEVEL : LED_OFF_LEVEL);
+}
+
+void resetEffectState() {
+    effect.nextMs = 0;
+    effect.step = 0;
+    effect.flickersRemaining = 0;
+    effect.outputOn = !ledOn;
+    writeLampOutput(ledOn, true);
+}
+
 void setLamp(bool on) {
     ledOn = on;
-    digitalWrite(ledPin, on ? LED_ON_LEVEL : LED_OFF_LEVEL);
+    resetEffectState();
+}
+
+void blinkBootSignal() {
+    for (uint8_t i = 0; i < BOOT_BLINK_COUNT; i++) {
+        digitalWrite(ledPin, LED_ON_LEVEL);
+        delay(BOOT_BLINK_ON_MS);
+        digitalWrite(ledPin, LED_OFF_LEVEL);
+        if (i + 1 < BOOT_BLINK_COUNT) {
+            delay(BOOT_BLINK_OFF_MS);
+        }
+    }
 }
 
 int skipJsonWhitespace(const String& input, int index) {
@@ -237,6 +288,93 @@ bool isValidMode(const String& mode) {
     return mode == "static" || mode == "purr" || mode == "bzzz" || mode == "blink";
 }
 
+bool isTimeReached(unsigned long now, unsigned long target) {
+    return static_cast<long>(now - target) >= 0;
+}
+
+void updateLampEffect() {
+    if (!ledOn) {
+        writeLampOutput(false);
+        return;
+    }
+
+    if (currentMode == "static") {
+        writeLampOutput(true);
+        return;
+    }
+
+    const unsigned long now = millis();
+
+    if (currentMode == "blink") {
+        if (effect.nextMs == 0) {
+            writeLampOutput(true);
+            effect.nextMs = now + BLINK_ON_MS;
+            return;
+        }
+
+        if (isTimeReached(now, effect.nextMs)) {
+            if (effect.outputOn) {
+                writeLampOutput(false);
+                effect.nextMs = now + BLINK_OFF_MS;
+            } else {
+                writeLampOutput(true);
+                effect.nextMs = now + BLINK_ON_MS;
+            }
+        }
+        return;
+    }
+
+    if (currentMode == "purr") {
+        if (effect.nextMs == 0) {
+            effect.step = 0;
+            writeLampOutput(PURR_PATTERN_ON[0]);
+            effect.nextMs = now + PURR_PATTERN_MS[0];
+            return;
+        }
+
+        if (isTimeReached(now, effect.nextMs)) {
+            effect.step = (effect.step + 1) % static_cast<int>(PURR_PATTERN_LEN);
+            writeLampOutput(PURR_PATTERN_ON[effect.step]);
+            effect.nextMs = now + PURR_PATTERN_MS[effect.step];
+        }
+        return;
+    }
+
+    if (currentMode == "bzzz") {
+        if (effect.nextMs == 0) {
+            writeLampOutput(true);
+            effect.flickersRemaining = 0;
+            effect.nextMs = now + random(BZZZ_GAP_MIN_MS, BZZZ_GAP_MAX_MS + 1);
+            return;
+        }
+
+        if (effect.flickersRemaining == 0) {
+            if (isTimeReached(now, effect.nextMs)) {
+                const uint8_t flickers = random(BZZZ_FLICKER_MIN_COUNT, BZZZ_FLICKER_MAX_COUNT + 1);
+                effect.flickersRemaining = flickers * 2;
+                effect.nextMs = now;
+            } else {
+                writeLampOutput(true);
+                return;
+            }
+        }
+
+        if (isTimeReached(now, effect.nextMs)) {
+            writeLampOutput(!effect.outputOn);
+            effect.flickersRemaining--;
+            effect.nextMs = now + random(BZZZ_FLICKER_MIN_MS, BZZZ_FLICKER_MAX_MS + 1);
+
+            if (effect.flickersRemaining <= 0) {
+                writeLampOutput(true);
+                effect.nextMs = now + random(BZZZ_GAP_MIN_MS, BZZZ_GAP_MAX_MS + 1);
+            }
+        }
+        return;
+    }
+
+    writeLampOutput(true);
+}
+
 void loadSettingsFromPrefs() {
     settings.wifiEnabled = prefs.getBool("wifi_en", false);
     settings.wifiSsid = prefs.getString("wifi_ssid", "");
@@ -282,7 +420,7 @@ void applyLedPin(int newPin) {
     int previousPin = ledPin;
     ledPin = newPin;
     pinMode(ledPin, OUTPUT);
-    digitalWrite(ledPin, ledOn ? LED_ON_LEVEL : LED_OFF_LEVEL);
+    writeLampOutput(effect.outputOn, true);
     if (previousPin != ledPin) {
         pinMode(previousPin, INPUT);
     }
@@ -508,6 +646,7 @@ void handleSetMode() {
 
     currentMode = valueStr;
     prefs.putString("mode", currentMode);
+    resetEffectState();
     server.send(200, "application/json", String("{\"mode\":\"") + currentMode + "\"}");
 }
 
@@ -557,11 +696,14 @@ void setup() {
     Serial.begin(115200);
     Serial.println();
     Serial.println("Meow. I wake up and claim my territory.");
+    randomSeed(static_cast<unsigned long>(micros()));
 
     prefs.begin("meowlamp", false);
     loadSettingsFromPrefs();
     ledPin = settings.ledPin;
     pinMode(ledPin, OUTPUT);
+    digitalWrite(ledPin, LED_OFF_LEVEL);
+    blinkBootSignal();
     setLamp(false);
 
     setupAccessPoint();
@@ -574,4 +716,5 @@ void setup() {
 void loop() {
     dnsServer.processNextRequest();
     server.handleClient();
+    updateLampEffect();
 }
